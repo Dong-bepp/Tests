@@ -1,0 +1,53 @@
+name: Campus Book Trade CI with Allure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      # 3. 安装 Python 依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install allure-pytest
+
+      # 4. 运行测试，生成 allure 结果
+      - name: Run tests and generate Allure results
+        run: |
+          pytest --alluredir=./allure-results
+
+      # 5. 在 CI 环境里安装 Allure CLI
+      - name: Install Allure CLI
+        run: |
+          sudo apt-add-repository ppa:qameta/allure
+          sudo apt-get update
+          sudo apt-get install -y allure
+
+      # 6. 生成 Allure HTML 报告
+      - name: Generate Allure report
+        run: |
+          allure generate ./allure-results -o ./allure-report --clean
+
+      # 7. 上传 Allure 报告，供下载查看
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: ./allure-report

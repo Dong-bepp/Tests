@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>校园二手书平台</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>欢迎来到校园二手书平台</h1>
+        <hr>
+        <h2>登录</h2>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="请输入用户名" required><br><br>
+            <input type="password" id="password" placeholder="请输入密码" required><br><br>
+            <button type="submit">登录</button>
+        </form>
+        <p id="message"></p>
+        <hr>
+        <h2>搜索书籍</h2>
+        <input type="text" id="searchBox" placeholder="输入书名，如：算法导论">
+        <button onclick="searchBook()">搜索</button>
+        <ul id="results"></ul>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"测试搜索“算法”能找到对应书籍","0","test_search_for_algorithm_book","tests.test_cases","2026-03-13","broken","2026-03-13","TestLoginAndSearch","test_login_flow","",""
+"测试搜索不存在的书显示无结果","0","test_search_no_results","tests.test_cases","2026-03-13","broken","2026-03-13","TestLoginAndSearch","test_login_flow","",""
+"测试不输入任何信息点击登录","0","test_failed_login_empty_fields","tests.test_cases","2026-03-13","broken","2026-03-13","TestLoginAndSearch","test_login_flow","",""
+"测试正确的用户名和密码可以登录成功","0","test_successful_login","tests.test_cases","2026-03-13","broken","2026-03-13","TestLoginAndSearch","test_login_flow","",""
+"测试错误的密码登录失败","0","test_failed_login_wrong_password","tests.test_cases","2026-03-13","broken","2026-03-13","TestLoginAndSearch","test_login_flow","",""
