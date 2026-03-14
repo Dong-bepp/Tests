@@ -7,35 +7,59 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:  # ✅ 加上这一行，允许手动运行
+  workflow_dispatch:  # 允许手动运行
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 拉取代码（升级到 v4，适配 Node.js 20+）
+      # 1. 拉取代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. 设置 Python 环境（升级到 v5，适配 Node.js 20+）
+      # 2. 设置 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
 
-      # 3. 安装 Python 依赖
+      # 3. 安装依赖（包括 pytest, allure-pytest 等）
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install allure-pytest
 
-      # 4. 运行测试，生成 Allure 结果数据
-      - name: Run tests and generate Allure results
+      # 4. 进入你的 Web 应用目录（比如 static 文件目录，比如 web_app/）
+      # 假设你的静态文件（html/js/css等）在 web_app/ 目录下，请根据实际情况修改
+      - name: Move to web app directory (静态文件服务目录)
         run: |
-          pytest --alluredir=./allure-results
+          cd web_app  # 请确保你的静态文件放在此目录下，或者改成你的实际目录，比如 ./
+          pwd
+          ls -la
 
-      # 5. 下载官方 Allure Commandline 工具（替代 apt 安装，避免 PPA 问题）
+      # 5. 启动静态文件服务（python -m http.server 8080），在后台运行
+      - name: Start local web server (http.server 8080)
+        run: |
+          nohup python -m http.server 8080 &  # 后台运行，监听 8080 端口
+          echo "✅ Local web server started at http://127.0.0.1:8080"
+
+      # 6. 等待服务启动（简单等待 3 秒，可优化为检测端口连通性）
+      - name: Wait for server to start
+        run: sleep 3
+
+      # 7. 运行测试（pytest），测试代码应该访问 http://127.0.0.1:8080
+      - name: Run tests (with pytest, 访问 web 服务)
+        run: |
+          pytest tests/  # 请确保你的测试用例在 tests/ 目录下，会访问 8080 端口服务
+
+      # 8. 生成 Allure 测试结果数据（如果测试中使用了 allure pytest）
+      - name: Generate Allure results
+        run: |
+          pytest --alluredir=./allure-results  # 如果前面测试没生成，这里再生成一次
+
+      # 9. 下载 Allure Commandline
       - name: Download and extract Allure Commandline
         run: |
           mkdir -p allure-bin
@@ -43,12 +67,12 @@ jobs:
           tar -xzf allure.tgz -C allure-bin --strip-components=1
           echo "$PWD/allure-bin/bin" >> $GITHUB_PATH
 
-      # 6. 生成 Allure HTML 报告
+      # 10. 生成 Allure HTML 报告
       - name: Generate Allure report
         run: |
           allure generate ./allure-results -o ./allure-report --clean
 
-      # 7. 上传 Allure 报告为 Artifact（可下载）
+      # 11. 上传 Allure 报告为 Artifact（可在 GitHub 页面下载）
       - name: Upload Allure report
         uses: actions/upload-artifact@v4
         with:
