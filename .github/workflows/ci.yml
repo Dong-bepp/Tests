@@ -1,10 +1,12 @@
-name: Campus Book Trade CI with Allure
+name: Campus Book Trade CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-and-test:
@@ -28,26 +30,27 @@ jobs:
           pip install -r requirements.txt
           pip install allure-pytest
 
-      # 4. 运行测试，生成 allure 结果
+      # 4. 运行测试，生成 Allure 结果数据
       - name: Run tests and generate Allure results
         run: |
           pytest --alluredir=./allure-results
 
-      # 5. 在 CI 环境里安装 Allure CLI
-      - name: Install Allure CLI
+      # 5. 下载官方 Allure Commandline 工具（推荐方式，替代 apt 安装）
+      - name: Download and extract Allure Commandline
         run: |
-          sudo apt-add-repository ppa:qameta/allure
-          sudo apt-get update
-          sudo apt-get install -y allure
+          mkdir -p allure-bin
+          curl -L https://github.com/allure-framework/allure2/releases/latest/download/allure-2.20.1.tgz -o allure.tgz
+          tar -xzf allure.tgz -C allure-bin --strip-components=1
+          echo "$PWD/allure-bin/bin" >> $GITHUB_PATH
 
       # 6. 生成 Allure HTML 报告
       - name: Generate Allure report
         run: |
           allure generate ./allure-results -o ./allure-report --clean
 
-      # 7. 上传 Allure 报告，供下载查看
+      # 7. 上传 Allure 报告为 GitHub Actions Artifact（可下载）
       - name: Upload Allure report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: allure-report
           path: ./allure-report
