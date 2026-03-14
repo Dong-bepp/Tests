@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 拉取代码
+      # 1. 拉取代码（升级到 v4，适配 Node.js 20+）
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2. 设置 Python 环境
+      # 2. 设置 Python 环境（升级到 v5，适配 Node.js 20+）
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.8'
 
@@ -35,7 +35,7 @@ jobs:
         run: |
           pytest --alluredir=./allure-results
 
-      # 5. 下载官方 Allure Commandline 工具（推荐方式，替代 apt 安装）
+      # 5. 下载官方 Allure Commandline 工具（替代 apt 安装，避免 PPA 问题）
       - name: Download and extract Allure Commandline
         run: |
           mkdir -p allure-bin
@@ -48,7 +48,7 @@ jobs:
         run: |
           allure generate ./allure-results -o ./allure-report --clean
 
-      # 7. 上传 Allure 报告为 GitHub Actions Artifact（可下载）
+      # 7. 上传 Allure 报告为 Artifact（可下载）
       - name: Upload Allure report
         uses: actions/upload-artifact@v4
         with:
