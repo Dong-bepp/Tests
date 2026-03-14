@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-
+  workflow_dispatch:  # ✅ 加上这一行，允许手动运行
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
