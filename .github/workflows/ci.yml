@@ -37,43 +37,52 @@ jobs:
           pip install -r requirements.txt
           pip install allure-pytest
 
+      # ⚠️ 新增：安装 Allure CLI（因为后面要用 allure generate 命令）
+      - name: 安装 Allure 命令行工具
+        run: |
+          # 下载 Allure 2.24.0（可替换为最新版）
+          curl -o allure.tgz -L https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
+          # 解压到 /opt
+          sudo tar -zxvf allure.tgz -C /opt/
+          # 创建软链接，使 allure 命令全局可用
+          sudo ln -s /opt/allure-2.24.0/bin/allure /usr/local/bin/allure
+          # 验证安装
+          allure --version
+
       # ------------------------------
-      # 4. 进入静态文件目录（比如 web_app/），启动 HTTP 服务
-      #    假设你的 HTML / 前端静态文件在 web_app/ 目录下
+      # 4. 进入静态文件目录，启动 HTTP 服务
       # ------------------------------
       - name: 启动本地 Web 服务（http.server 8080）
         run: |
-          # 进入存放静态文件（如 HTML）的目录，通常是 web_app/ 或 ./ （根据你的实际目录调整！）
           cd web_app || { echo "❌ web_app 目录不存在！请确认静态文件在哪个目录"; exit 1; }
           pwd
           ls -la
           nohup python -m http.server 8080 > server.log 2>&1 &
-          echo "✅ 本地静态文件服务已启动：http://127.0.0.1:8080 (在 web_app/ 目录下)"
-          cd ..  # ⬅️ 重要！一定要切回项目根目录，以便后续运行 pytest
+          echo "✅ 本地静态文件服务已启动：http://127.0.0.1:8080"
+          cd ..
 
       # ------------------------------
-      # 5. 等待服务启动（简单等待几秒）
+      # 5. 等待服务启动
       # ------------------------------
       - name: 等待 Web 服务启动
         run: sleep 3
 
       # ------------------------------
-      # 6. 运行测试（确保在项目根目录下执行，能找到 tests/ 目录）
-      #    并生成 Allure 测试结果数据
+      # 6. 运行测试，生成 Allure 结果数据
       # ------------------------------
       - name: 运行测试（pytest + allure）
         run: |
-          pytest tests/ -v --alluredir=./allure-results  # ✅ 在项目根目录运行，同时生成 allure 数据
+          pytest tests/ -v --alluredir=./allure-results
 
       # ------------------------------
-      # 7. 生成 Allure HTML 报告
+      # 7. 生成 Allure HTML 报告（现在 allure 命令已可用）
       # ------------------------------
       - name: 生成 Allure 测试报告
         run: |
           allure generate ./allure-results -o ./allure-report --clean
 
       # ------------------------------
-      # 8. 上传 Allure 报告为 GitHub Actions Artifact（可下载查看）
+      # 8. 上传 Allure 报告为 Artifact
       # ------------------------------
       - name: 上传 Allure 测试报告
         uses: actions/upload-artifact@v4
