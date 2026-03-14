@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:  # 允许手动运行
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   build-and-test:
@@ -17,7 +17,7 @@ jobs:
       # ------------------------------
       # 1. 拉取代码
       # ------------------------------
-      - name: Checkout 代码
+      - name: 拉取代码
         uses: actions/checkout@v4
 
       # ------------------------------
@@ -29,74 +29,53 @@ jobs:
           python-version: '3.8'
 
       # ------------------------------
-      # 3. 安装依赖（明确：重新加载 requirements.txt）
-      #    包括 pytest, allure-pytest 等第三方库
+      # 3. 安装依赖（pytest, selenium, allure-pytest 等）
       # ------------------------------
-      - name: 安装 Python 依赖（来自 requirements.txt）
+      - name: 安装 Python 依赖
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install allure-pytest
 
       # ------------------------------
-      # 4. 进入静态文件目录（比如 web_app/，存放 HTML/JS 前端模拟数据）
-      #    请根据你的项目实际情况修改，比如改为 `cd .` 或 `cd static/`
+      # 4. 进入静态文件目录（比如 web_app/），启动 HTTP 服务
+      #    假设你的 HTML / 前端静态文件在 web_app/ 目录下
       # ------------------------------
-      - name: 进入 Web 应用（静态文件）目录
+      - name: 启动本地 Web 服务（http.server 8080）
         run: |
-          cd web_app  # 请确保该目录下有你的 HTML / JS / 静态资源
+          # 进入存放静态文件（如 HTML）的目录，通常是 web_app/ 或 ./ （根据你的实际目录调整！）
+          cd web_app || { echo "❌ web_app 目录不存在！请确认静态文件在哪个目录"; exit 1; }
           pwd
           ls -la
+          nohup python -m http.server 8080 > server.log 2>&1 &
+          echo "✅ 本地静态文件服务已启动：http://127.0.0.1:8080 (在 web_app/ 目录下)"
+          cd ..  # ⬅️ 重要！一定要切回项目根目录，以便后续运行 pytest
 
       # ------------------------------
-      # 5. 启动本地静态文件服务（http.server 8080），在后台运行
-      # ------------------------------
-      - name: 启动本地 Web 服务（监听 8080）
-        run: |
-          nohup python -m http.server 8080 &
-          echo "✅ 本地静态文件服务已启动：http://127.0.0.1:8080"
-
-      # ------------------------------
-      # 6. 等待服务启动（简单等待 3 秒，可优化为检测端口是否可访问）
+      # 5. 等待服务启动（简单等待几秒）
       # ------------------------------
       - name: 等待 Web 服务启动
         run: sleep 3
 
       # ------------------------------
-      # 7. 运行测试（pytest），测试用例应该访问 http://127.0.0.1:8080
+      # 6. 运行测试（确保在项目根目录下执行，能找到 tests/ 目录）
+      #    并生成 Allure 测试结果数据
       # ------------------------------
-      - name: 运行测试（pytest）
+      - name: 运行测试（pytest + allure）
         run: |
-          pytest tests/  # 请确保测试文件在 tests/ 目录，会访问本地服务
+          pytest tests/ -v --alluredir=./allure-results  # ✅ 在项目根目录运行，同时生成 allure 数据
 
       # ------------------------------
-      # 8. 生成 Allure 测试结果数据（如果测试中使用了 allure pytest）
-      # ------------------------------
-      - name: 生成 Allure 测试结果
-        run: |
-          pytest --alluredir=./allure-results  # 确保生成测试结果数据
-
-      # ------------------------------
-      # 9. 下载 Allure Commandline 工具（用于生成 HTML 报告）
-      # ------------------------------
-      - name: 下载 Allure CLI
-        run: |
-          mkdir -p allure-bin
-          curl -L https://github.com/allure-framework/allure2/releases/latest/download/allure-2.20.1.tgz -o allure.tgz
-          tar -xzf allure.tgz -C allure-bin --strip-components=1
-          echo "$PWD/allure-bin/bin" >> $GITHUB_PATH
-
-      # ------------------------------
-      # 10. 生成 Allure HTML 报告
+      # 7. 生成 Allure HTML 报告
       # ------------------------------
       - name: 生成 Allure 测试报告
         run: |
           allure generate ./allure-results -o ./allure-report --clean
 
       # ------------------------------
-      # 11. 上传 Allure 报告为 GitHub Actions Artifact（可下载）
+      # 8. 上传 Allure 报告为 GitHub Actions Artifact（可下载查看）
       # ------------------------------
-      - name: 上传 Allure 报告
+      - name: 上传 Allure 测试报告
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
